@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# For more information about this program, see https://github.com/willemw12/xmltv2rss
+
 import argparse
 import io
 import os.path
@@ -87,10 +89,15 @@ def _convert(args):
 #          '<pubDate>%(pub_date)s</pubDate>' + \
 #        '</item>'
 
+    #try:
+
     #from xml.etree.ElementTree import ElementTree
     #xmltv_tree = ElementTree()
     #xmltv_tree.parse(args.input_filename)
     xmltv_tree = ElementTree.parse(args.input_filename)
+
+    #except subprocess.CalledProcessError as exc:
+    #    ...
 
     if isinstance(args.input_filename, str):
         # Get modification time of the input file
