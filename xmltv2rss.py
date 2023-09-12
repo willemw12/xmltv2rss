@@ -194,7 +194,8 @@ def _convert(args):
     #print(parseString(rss_tree_str).toprettyxml(indent='  ', newl='\n'))
 
 def _main():
-    parser = argparse.ArgumentParser(description='Convert XMLTV into RSS.')
+    parser = argparse.ArgumentParser(description='Generate an RSS feed from an XMLTV (tvguide) listing. Print the result to standard output.',
+                                     epilog='For information about date and time format strings ("%Y", "%H", etc.), search for "datetime" on https://docs.python.org.')
     parser.add_argument('--feed-date-format', '-d', nargs=1, default=['%a %d %B, %Y'], help='examples: "%%Y-%%m-%%d", "%%a %%d %%B, %%Y", "%%x"')
     parser.add_argument('--feed-language', default=DEFAULT_RSS_CHANNEL_LANGUAGE, help='RSS feed language. Default: "' + DEFAULT_RSS_CHANNEL_LANGUAGE + '"')
     parser.add_argument('--feed-time-format', '-t', nargs=1, default=['%H:%M'], help='examples: "%%H:%%M", "%%I:%%M %%p", "%%X"')

@@ -1,6 +1,6 @@
 # xmltv2rss
 
-Convert XMLTV (tvguide) listings into an RSS news feed.
+Generate an RSS feed from an XMLTV (tvguide) listing.
 
 ## Dependencies
 
