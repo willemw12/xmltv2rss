@@ -20,10 +20,11 @@ for input_file in "$input_dir"/*.xml; do
   #diff --unified=0 "$expected_file" "$output_file" || ret=1
 
   # Diff the result but ignore the <lastBuildDate/> line
+  # and the first <pubDate/> line (the feed's pubDate)
   output_file_tmp="$output_file-output"
   expected_file_tmp="$output_file-expected"
-  sed '/lastBuildDate/d' "$output_file" >"$output_file_tmp"
-  sed '/lastBuildDate/d' "$expected_file" >"$expected_file_tmp"
+  sed '/lastBuildDate/d; /pubDate/{x;//!d;x}' "$output_file" >"$output_file_tmp"
+  sed '/lastBuildDate/d; /pubDate/{x;//!d;x}' "$expected_file" >"$expected_file_tmp"
   msg="$(diff --unified=0 "$expected_file_tmp" "$output_file_tmp")" || ret=1
   if [ -n "$msg" ]; then
     printf '==> %s\n' "$input_file"
