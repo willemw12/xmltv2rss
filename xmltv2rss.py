@@ -160,7 +160,7 @@ def _convert(args):
                     stoptime_dt = datetime.strptime(stoptime, DEFAULT_XMLTV_DATETIME_FORMAT_UTC).replace(tzinfo=timezone.utc)
 
                 # adjust start and stop time to local timezone
-                # this also fixes airdate/airtime to display in local (not original) timzeone
+                # this also fixes airdate/airtime to display in local (not original) timezeone
                 # no need to import tzlocal when using .astimezone()
                 starttime_dt = starttime_dt.astimezone()
                 stoptime_dt = stoptime_dt.astimezone()
@@ -222,7 +222,7 @@ def _main():
     parser.add_argument('--feed-title', default=DEFAULT_RSS_CHANNEL_TITLE, help='RSS feed title')
     parser.add_argument('--feed-url', default=DEFAULT_RSS_CHANNEL_LINK, help='RSS feed link') # help='RSS feed link. Default: "' + DEFAULT_RSS_CHANNEL_LINK + '"')
     #parser.add_argument('--indent', action='store_const', const=True, default=2, help='Output XML indentation')
-    parser.add_argument('--xmltv-datetime-format', nargs=1, default=DEFAULT_XMLTV_DATETIME_FORMAT, help='XMLTV date and time format. Default: "' + DEFAULT_XMLTV_DATETIME_FORMAT.replace('%', '%%') + '"')
+    parser.add_argument('--xmltv-datetime-format', nargs=1, default=DEFAULT_XMLTV_DATETIME_FORMAT, help='XMLTV date and time format. Default: "' + DEFAULT_XMLTV_DATETIME_FORMAT.replace('%', '%%') + '", Fallback: "' + DEFAULT_XMLTV_DATETIME_FORMAT_UTC.replace('%', '%%') + '"')
     parser.add_argument('input_filename', metavar='<file>', nargs='?', default=sys.stdin, help='XMLTV input file')
     parser.set_defaults(feed_description=DEFAULT_RSS_CHANNEL_DESCRIPTION)
     args = parser.parse_args()
