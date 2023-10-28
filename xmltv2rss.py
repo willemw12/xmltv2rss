@@ -176,6 +176,9 @@ def _convert(args):
                 airtime_length = '{0:2}'.format(airtime_length_mins // 60) + ':' + \
                                  '{0:02}'.format(airtime_length_mins % 60) + ':00'
 
+                # EPG <desc> allows newlines, make them <br/> for prettier display
+                desc = '<br/>'.join(desc.splitlines())
+
                 guid = channel_id + '-' + starttime_dt.strftime('%Y%m%d%H%M%S')
                 pub_date = utils.formatdate(starttime_dt.timestamp(), localtime=True)
 

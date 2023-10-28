@@ -14,7 +14,8 @@
   <programme start="20231029000000 +0200" stop="20231029060000 +0100" channel="niteradio.example.com">
     <title lang="en">Nuit électronique (requests enabled)</title>
     <sub-title lang="en">Your station, YOUR music.</sub-title>
-    <desc lang="en">Programme crossing end of daylight savings time (UTC+0200 to UTC+0100). This has an actual duration of 7:00:00!</desc>
+    <desc lang="en">Programme crossing end of daylight savings time (UTC+0200 to UTC+0100).
+This has an actual duration of 7:00:00!</desc>
     <credits/>
     <category lang="en">Music</category>
   </programme>
