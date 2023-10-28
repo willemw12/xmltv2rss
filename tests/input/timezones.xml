@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE tv SYSTEM "xmltv.dtd">
+<tv date="20231028000209 +0200" source-info-url="https://example.com" source-info-name="example.com" generator-info-name="azuracast_xmltv 0.11.0" generator-info-url="https://github.com/Moonbase59/azuracast_xmltv">
+  <channel id="niteradio.example.com">
+    <display-name>Nite Radio</display-name>
+    <icon src="https://example.com/api/station/1/art/0"/>
+  </channel>
+  <programme start="20231028180000 +0200" stop="20231029000000 +0200" channel="niteradio.example.com">
+    <title lang="en">Heart Dance from London, UK</title>
+    <desc lang="en">Programme within timezone UTC+0200.</desc>
+    <credits/>
+    <category lang="en">Music</category>
+  </programme>
+  <programme start="20231029000000 +0200" stop="20231029060000 +0100" channel="niteradio.example.com">
+    <title lang="en">Nuit électronique (requests enabled)</title>
+    <sub-title lang="en">Your station, YOUR music.</sub-title>
+    <desc lang="en">Programme crossing end of daylight savings time (UTC+0200 to UTC+0100). This has an actual duration of 7:00:00!</desc>
+    <credits/>
+    <category lang="en">Music</category>
+  </programme>
+  <programme start="20231029050000" stop="20231029110000" channel="niteradio.example.com">
+    <title lang="en">Pop (requests enabled)</title>
+    <sub-title lang="en">Your station, YOUR music.</sub-title>
+    <desc lang="en">Program with no UTC offset given; should assume UTC.</desc>
+    <credits/>
+    <category lang="en">Music</category>
+  </programme>
+</tv>

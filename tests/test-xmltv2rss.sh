@@ -14,7 +14,8 @@ ret=0
 for input_file in "$input_dir"/*.xml; do
   expected_file="$expected_dir/${input_file##*/}"
 
-  ../xmltv2rss.py "$input_file" >"$output_file" || exit 1
+  # need to compare in the same timezone, otherwise we'll get many diff's
+  TZ=UTC ../xmltv2rss.py "$input_file" >"$output_file" || exit 1
 
   #diff --unified=0 "$expected_file" "$output_file" || ret=1
 
