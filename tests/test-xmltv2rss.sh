@@ -1,6 +1,10 @@
 #!/bin/sh
 
 # Run CLI program tests
+#
+# All tests are successful when both:
+# - the standard output and standard error are empty and
+# - the exit code is 0
 
 input_dir=input
 expected_dir=output
@@ -14,7 +18,7 @@ ret=0
 for input_file in "$input_dir"/*.xml; do
   expected_file="$expected_dir/${input_file##*/}"
 
-  # need to compare in the same timezone, otherwise we'll get many diff's
+  # Compare in the same timezone to avoid unnecessary diff output
   TZ=UTC ../xmltv2rss.py "$input_file" >"$output_file" || exit 1
 
   #diff --unified=0 "$expected_file" "$output_file" || ret=1
