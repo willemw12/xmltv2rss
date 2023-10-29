@@ -24,7 +24,7 @@ DEFAULT_RSS_CHANNEL_LINK = ""
 DEFAULT_RSS_CHANNEL_TITLE = "XMLTV feed"
 
 
-def _convert(args):
+def convert(args):
     RSS_CHANNEL_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0">
   <channel>
@@ -238,7 +238,7 @@ def _convert(args):
     # print(parseString(rss_tree_str).toprettyxml(indent='  ', newl='\n'))
 
 
-def _main():
+def main():
     parser = argparse.ArgumentParser(
         description="Generate an RSS feed from an XMLTV (tvguide) listing. Print the result to standard output.",
         epilog='For information about date and time format strings ("%Y", "%H", etc.), search for "datetime" on https://docs.python.org.',
@@ -299,8 +299,8 @@ def _main():
     args = parser.parse_args()
     # indent = args.indent
 
-    _convert(args)
+    convert(args)
 
 
 if __name__ == "__main__":
-    _main()
+    main()
