@@ -48,11 +48,11 @@ def convert(args):
     </item>
 """
 
-    # Pretty print
+    # For pretty output
     RSS_ITEM_HEAD_TEMPLATE = """
     """
 
-    # Pretty print
+    # For pretty output
     RSS_ITEM_TAIL_TEMPLATE = """
   """
 
@@ -124,7 +124,7 @@ def convert(args):
 
     rss_channel = rss_tree.find("channel")
     if rss_channel is not None:
-        # Pretty print
+        # For pretty output
         #
         # TODO: Return the last child, not the first child
         # last_child = channel.find('*[last()]')
@@ -196,7 +196,7 @@ def convert(args):
                     + ":00"
                 )
 
-                # EPG <desc> allows newlines. Make them <br/> for prettier display
+                # EPG <desc> allows newlines. Make them <br/> for pretty output
                 desc = "<br/>".join(desc.splitlines())
 
                 guid = channel_id + "-" + starttime_dt.strftime("%Y%m%d%H%M%S")
@@ -224,7 +224,7 @@ def convert(args):
                 item_str = RSS_ITEM_TEMPLATE % item_dict
                 item = ElementTree.fromstring(item_str)
 
-                # Pretty print
+                # For pretty output
                 if i < len(programs) - 1:
                     item.tail = RSS_ITEM_HEAD_TEMPLATE
                 else:
@@ -248,7 +248,7 @@ def main():
         "-d",
         nargs=1,
         default=["%a %d %B, %Y"],
-        help='examples: "%%Y-%%m-%%d", "%%a %%d %%B, %%Y", "%%x"',
+        help='RSS feed date format. Examples: "%%Y-%%m-%%d", "%%a %%d %%B, %%Y", "%%x"',
     )
     parser.add_argument(
         "--feed-language",
@@ -260,7 +260,7 @@ def main():
         "-t",
         nargs=1,
         default=["%H:%M"],
-        help='examples: "%%H:%%M", "%%I:%%M %%p", "%%X"',
+        help='RSS feed time format. Examples: "%%H:%%M", "%%I:%%M %%p", "%%X"',
     )
     parser.add_argument(
         "--feed-title", default=DEFAULT_RSS_CHANNEL_TITLE, help="RSS feed title"
@@ -284,7 +284,7 @@ def main():
         default=DEFAULT_XMLTV_DATETIME_FORMAT,
         help='XMLTV date and time format. Default: "'
         + DEFAULT_XMLTV_DATETIME_FORMAT.replace("%", "%%")
-        + '", default fallback: "'
+        + '". Default fallback: "'
         + DEFAULT_XMLTV_DATETIME_FORMAT_UTC.replace("%", "%%")
         + '"',
     )
