@@ -2,13 +2,14 @@
 
 Generate an RSS feed from an XMLTV (tvguide) listing.
 
-## Dependencies
 
-Python 3.
+## Dependency
 
-## Using xmltv2rss
+- Python 3
 
-For help, run:
 
-    $ ./xmltv2rss.py --help
+## Usage
 
+For usage information, run:
+
+    ./xmltv2rss.py --help

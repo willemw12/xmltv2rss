@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-# For the latest information about this program, see https://github.com/willemw12/xmltv2rss
+# For the latest information about this program, see:
+# https://github.com/willemw12/xmltv2rss (GPLv3)
 
 import argparse
 import io
@@ -293,7 +294,7 @@ def main():
         metavar="<file>",
         nargs="?",
         default=sys.stdin,
-        help="XMLTV input file",
+        help="XMLTV input filename. Default: read from standard input",
     )
     parser.set_defaults(feed_description=DEFAULT_RSS_CHANNEL_DESCRIPTION)
     args = parser.parse_args()
