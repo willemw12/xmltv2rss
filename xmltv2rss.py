@@ -25,7 +25,34 @@ DEFAULT_RSS_CHANNEL_LINK = ""
 DEFAULT_RSS_CHANNEL_TITLE = "XMLTV feed"
 
 
-def convert(args):
+def run(args):
+    # try:
+
+    # from xml.etree.ElementTree import ElementTree
+    # xmltv_feed = ElementTree()
+    # xmltv_feed.parse(args.input_filename)
+    xmltv_feed = ElementTree.parse(args.input_filename)
+
+    # except xml.etree.ElementTree.ParseError as exc:
+    #    ...
+
+    created_on = utils.formatdate(localtime=True)
+    if isinstance(args.input_filename, str):
+        # Get modification time from the input file
+        timestamp = os.path.getmtime(args.input_filename)
+        pub_date = utils.formatdate(timestamp, localtime=True)
+    else:
+        pub_date = utils.formatdate(localtime=True)
+
+    rss_feed = convert_feed(args, created_on, pub_date, xmltv_feed)
+
+    rss_feed.write(sys.stdout, encoding="unicode")
+
+    # rss_tree_str = xml.etree.ElementTree.tostring(rss_feed.getroot(), encoding='unicode')
+    # print(parseString(rss_tree_str).toprettyxml(indent='  ', newl='\n'))
+
+
+def convert_feed(args, created_on, pub_date, xmltv_feed):
     RSS_CHANNEL_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0">
   <channel>
@@ -39,36 +66,6 @@ def convert(args):
 </rss>
 """
 
-    RSS_ITEM_TEMPLATE = """
-    <item>
-      <title><![CDATA[%(title)s]]></title>
-      <link></link>
-      <description><![CDATA[%(description)s]]></description>
-      <guid>%(guid)s</guid>
-      <pubDate>%(pub_date)s</pubDate>
-    </item>
-"""
-
-    # For pretty output
-    RSS_ITEM_HEAD_TEMPLATE = """
-    """
-
-    # For pretty output
-    RSS_ITEM_TAIL_TEMPLATE = """
-  """
-
-    RSS_ITEM_DESCRIPTION_TEMPLATE = """
-         <table>
-            <tr><td align="right" valign="top">Title:</td><td>%(title)s</td></tr>
-            <tr><td align="right" valign="top">Channel:</td><td>%(channel)s</td></tr>
-            <tr><td align="right" valign="top">Airdate:</td><td>%(airdate)s</td></tr>
-            <tr><td align="right" valign="top">Airtime:</td><td>%(airtime)s</td></tr>
-            <tr><td align="right" valign="top" style="white-space: nowrap">Length:</td><td>%(airtime_length)s</td></tr>
-            <tr><td align="right" valign="top">Category:</td><td>%(category)s</td></tr>
-            <tr><td align="right" valign="top">Description:</td><td>%(desc)s</td></tr>
-         </table>
-      """
-
     #    RSS_CHANNEL_TEMPLATE = \
     #        '<?xml version="1.0" encoding="UTF-8" ?>' + \
     #        '<rss version="2.0">' + \
@@ -81,33 +78,16 @@ def convert(args):
     #            '<language>%(language)s</language>' + \
     #          '</channel>' + \
     #        '</rss>'
-    #
-    #    RSS_ITEM_TEMPLATE = \
-    #        '<item>' + \
-    #          '<title><![CDATA[%(title)s]]></title>' + \
-    #          '<link></link>' + \
-    #          '<description><![CDATA[%(description)s]]></description>' + \
-    #          '<guid>%(guid)s</guid>' + \
-    #          '<pubDate>%(pub_date)s</pubDate>' + \
-    #        '</item>'
 
-    # try:
+    # For pretty output
+    RSS_ITEM_HEAD_TEMPLATE = """
+    """
 
-    # from xml.etree.ElementTree import ElementTree
-    # xmltv_tree = ElementTree()
-    # xmltv_tree.parse(args.input_filename)
-    xmltv_tree = ElementTree.parse(args.input_filename)
+    # For pretty output
+    RSS_ITEM_TAIL_TEMPLATE = """
+  """
 
-    # except xml.etree.ElementTree.ParseError as exc:
-    #    ...
-
-    if isinstance(args.input_filename, str):
-        # Get modification time from the input file
-        timestamp = os.path.getmtime(args.input_filename)
-        pub_date = utils.formatdate(timestamp, localtime=True)
-    else:
-        pub_date = utils.formatdate(localtime=True)
-    created_on = utils.formatdate(localtime=True)
+    rss_feed = ElementTree.ElementTree()
 
     rss_channel_dict = dict(
         title=args.feed_title,
@@ -119,11 +99,10 @@ def convert(args):
     )
     rss_channel_str = RSS_CHANNEL_TEMPLATE % rss_channel_dict
 
-    rss_tree = ElementTree.ElementTree()
-    # rss_tree.parse('rss_channel_template.xml')
-    rss_tree.parse(io.StringIO(rss_channel_str))
+    # rss_feed.parse('rss_channel_template.xml')
+    rss_feed.parse(io.StringIO(rss_channel_str))
 
-    rss_channel = rss_tree.find("channel")
+    rss_channel = rss_feed.find("channel")
     if rss_channel is not None:
         # For pretty output
         #
@@ -135,108 +114,138 @@ def convert(args):
         last_child = children[len(children) - 1]
         last_child.tail = RSS_ITEM_HEAD_TEMPLATE
 
-        # programs = iterfind('programme')
-        programs = xmltv_tree.findall("programme")
-        if programs is not None:
-            for i, program in enumerate(programs):
-                channel_id = program.get("channel", default="")
-                title = program.findtext("title", default="")
-                desc = program.findtext("desc", default="")
-                category = program.findtext("category", default="")
-
-                starttime = program.get("start", default="")
-                stoptime = program.get("stop", default=starttime)
-
-                channel_callsign = xmltv_tree.findtext(
-                    "./channel[@id='" + channel_id + "']/display-name"
-                )
-                channel = "{}-{}".format(channel_id, channel_callsign)
-
-                # starttime/stoptime are format "YYYYMMDDHHMMSS ±HHMM" or just "YYYYMMDDHHMMSS"
-                # (assuming UTC), so we retry if parsing with timezone fails
-                try:
-                    starttime_dt = datetime.strptime(
-                        starttime, args.xmltv_datetime_format
-                    )
-                except ValueError:
-                    starttime_dt = datetime.strptime(
-                        starttime, DEFAULT_XMLTV_DATETIME_FORMAT_UTC
-                    ).replace(tzinfo=timezone.utc)
-
-                try:
-                    stoptime_dt = datetime.strptime(
-                        stoptime, args.xmltv_datetime_format
-                    )
-                except ValueError:
-                    stoptime_dt = datetime.strptime(
-                        stoptime, DEFAULT_XMLTV_DATETIME_FORMAT_UTC
-                    ).replace(tzinfo=timezone.utc)
-
-                # Adjust start and stop time to local timezone.
-                # This also fixes airdate/airtime to display in local (not original) timezone.
-                # No need to import tzlocal when using .astimezone().
-                starttime_dt = starttime_dt.astimezone()
-                stoptime_dt = stoptime_dt.astimezone()
-
-                # No need to determine the timezone.
-                # The starttime and stoptime strings already contain the timezone
-                airdate = datetime.strftime(starttime_dt, args.feed_date_format[0])
-                airtime = (
-                    datetime.strftime(starttime_dt, args.feed_time_format[0])
-                    + " - "
-                    + datetime.strftime(stoptime_dt, args.feed_time_format[0])
-                )
-
-                # Airtime length in hours and minutes
-                airtime_length_td = stoptime_dt - starttime_dt
-                airtime_length_mins = airtime_length_td.seconds // 60
-                airtime_length = (
-                    "{0:2}".format(airtime_length_mins // 60)
-                    + ":"
-                    + "{0:02}".format(airtime_length_mins % 60)
-                    + ":00"
-                )
-
-                # EPG <desc> allows newlines. Make them <br/> for pretty output
-                desc = "<br/>".join(desc.splitlines())
-
-                guid = channel_id + "-" + starttime_dt.strftime("%Y%m%d%H%M%S")
-                pub_date = utils.formatdate(starttime_dt.timestamp(), localtime=True)
-
-                description_dict = dict(
-                    title=title,
-                    channel=channel,
-                    airdate=airdate,
-                    airtime=airtime,
-                    airtime_length=airtime_length,
-                    desc=desc,
-                    category=category,
-                )
-                description_str = RSS_ITEM_DESCRIPTION_TEMPLATE % description_dict
-
-                item_dict = dict(
-                    title=title,
-                    # sub_title=sub_title,
-                    # link=link,
-                    description=description_str,
-                    guid=guid,
-                    pub_date=pub_date,
-                )
-                item_str = RSS_ITEM_TEMPLATE % item_dict
-                item = ElementTree.fromstring(item_str)
+        # xmltv_programmes = iterfind('programme')
+        xmltv_programmes = xmltv_feed.findall("programme")
+        if xmltv_programmes is not None:
+            for i, xmltv_programme in enumerate(xmltv_programmes):
+                rss_item = convert_programme(args, xmltv_feed, xmltv_programme)
 
                 # For pretty output
-                if i < len(programs) - 1:
-                    item.tail = RSS_ITEM_HEAD_TEMPLATE
+                if i < len(xmltv_programmes) - 1:
+                    rss_item.tail = RSS_ITEM_HEAD_TEMPLATE
                 else:
-                    item.tail = RSS_ITEM_TAIL_TEMPLATE
+                    rss_item.tail = RSS_ITEM_TAIL_TEMPLATE
 
-                rss_channel.append(item)
+                rss_channel.append(rss_item)
 
-    rss_tree.write(sys.stdout, encoding="unicode")
+    return rss_feed
 
-    # rss_tree_str = xml.etree.ElementTree.tostring(rss_tree.getroot(), encoding='unicode')
-    # print(parseString(rss_tree_str).toprettyxml(indent='  ', newl='\n'))
+
+def convert_programme(args, xmltv_feed, xmltv_programme):
+    RSS_ITEM_TEMPLATE = """
+    <item>
+      <title><![CDATA[%(title)s]]></title>
+      <link></link>
+      <description><![CDATA[%(description)s]]></description>
+      <guid>%(guid)s</guid>
+      <pubDate>%(pub_date)s</pubDate>
+    </item>
+"""
+    RSS_ITEM_DESCRIPTION_TEMPLATE = """
+         <table>
+            <tr><td align="right" valign="top">Title:</td><td>%(title)s</td></tr>
+            <tr><td align="right" valign="top">Channel:</td><td>%(channel)s</td></tr>
+            <tr><td align="right" valign="top">Airdate:</td><td>%(airdate)s</td></tr>
+            <tr><td align="right" valign="top">Airtime:</td><td>%(airtime)s</td></tr>
+            <tr><td align="right" valign="top" style="white-space: nowrap">Length:</td><td>%(airtime_length)s</td></tr>
+            <tr><td align="right" valign="top">Category:</td><td>%(category)s</td></tr>
+            <tr><td align="right" valign="top">Description:</td><td>%(desc)s</td></tr>
+         </table>
+      """
+
+    #    RSS_ITEM_TEMPLATE = \
+    #        '<item>' + \
+    #          '<title><![CDATA[%(title)s]]></title>' + \
+    #          '<link></link>' + \
+    #          '<description><![CDATA[%(description)s]]></description>' + \
+    #          '<guid>%(guid)s</guid>' + \
+    #          '<pubDate>%(pub_date)s</pubDate>' + \
+    #        '</item>'
+
+    channel_id = xmltv_programme.get("channel", default="")
+    title = xmltv_programme.findtext("title", default="")
+    desc = xmltv_programme.findtext("desc", default="")
+    category = xmltv_programme.findtext("category", default="")
+
+    starttime = xmltv_programme.get("start", default="")
+    stoptime = xmltv_programme.get("stop", default=starttime)
+
+    channel_callsign = xmltv_feed.findtext(
+        "./channel[@id='" + channel_id + "']/display-name"
+    )
+    channel = "{}-{}".format(channel_id, channel_callsign)
+
+    # starttime/stoptime are of format "YYYYMMDDHHMMSS ±HHMM" or just "YYYYMMDDHHMMSS" (UTC assumed),
+    # so we retry if parsing with timezone fails
+    try:
+        starttime_dt = datetime.strptime(starttime, args.xmltv_datetime_format)
+    except ValueError:
+        starttime_dt = datetime.strptime(
+            starttime, DEFAULT_XMLTV_DATETIME_FORMAT_UTC
+        ).replace(tzinfo=timezone.utc)
+
+    try:
+        stoptime_dt = datetime.strptime(stoptime, args.xmltv_datetime_format)
+    except ValueError:
+        stoptime_dt = datetime.strptime(
+            stoptime, DEFAULT_XMLTV_DATETIME_FORMAT_UTC
+        ).replace(tzinfo=timezone.utc)
+
+    # Adjust start and stop time to local timezone.
+    # airdate/airtime will be displayed in local, not the original, timezone.
+    # No need to import tzlocal when using .astimezone().
+    starttime_dt = starttime_dt.astimezone()
+    stoptime_dt = stoptime_dt.astimezone()
+
+    # No need to determine the timezone.
+    # The starttime and stoptime strings already contain the timezone
+    airdate = datetime.strftime(starttime_dt, args.feed_date_format[0])
+    airtime = (
+        datetime.strftime(starttime_dt, args.feed_time_format[0])
+        + " - "
+        + datetime.strftime(stoptime_dt, args.feed_time_format[0])
+    )
+
+    # Airtime length in hours and minutes
+    airtime_length_td = stoptime_dt - starttime_dt
+    airtime_length_mins = airtime_length_td.seconds // 60
+    airtime_length = (
+        "{0:2}".format(airtime_length_mins // 60)
+        + ":"
+        + "{0:02}".format(airtime_length_mins % 60)
+        + ":00"
+    )
+
+    # EPG <desc> allows newlines. Make them <br/> for pretty print output
+    desc = "<br/>".join(desc.splitlines())
+
+    guid = channel_id + "-" + starttime_dt.strftime("%Y%m%d%H%M%S")
+    pub_date = utils.formatdate(starttime_dt.timestamp(), localtime=True)
+
+    description_dict = dict(
+        title=title,
+        channel=channel,
+        airdate=airdate,
+        airtime=airtime,
+        airtime_length=airtime_length,
+        desc=desc,
+        category=category,
+    )
+    description_str = RSS_ITEM_DESCRIPTION_TEMPLATE % description_dict
+
+    rss_item_dict = dict(
+        title=title,
+        # sub_title=sub_title,
+        # link=link,
+        description=description_str,
+        guid=guid,
+        pub_date=pub_date,
+    )
+    rss_item_str = RSS_ITEM_TEMPLATE % rss_item_dict
+
+    rss_item = ElementTree.fromstring(rss_item_str)
+
+    return rss_item
 
 
 def main():
@@ -300,7 +309,7 @@ def main():
     args = parser.parse_args()
     # indent = args.indent
 
-    convert(args)
+    run(args)
 
 
 if __name__ == "__main__":
