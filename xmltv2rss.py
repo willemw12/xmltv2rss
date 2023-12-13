@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
-# For the latest information about this program, see:
-# https://github.com/willemw12/xmltv2rss (GPLv3)
+# For the latest information about this program (GPLv3 license), see:
+#
+#     https://github.com/willemw12/xmltv2rss
+#
 
 import argparse
 import io
@@ -25,13 +27,76 @@ DEFAULT_RSS_CHANNEL_LINK = ""
 DEFAULT_RSS_CHANNEL_TITLE = "XMLTV feed"
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Generate an RSS feed from an XMLTV (tvguide) listing. Print the result to standard output.",
+        epilog='For information about date and time format strings ("%Y", "%H", etc.), search for "datetime" on https://docs.python.org.',
+    )
+    parser.add_argument(
+        "--feed-date-format",
+        "-d",
+        nargs=1,
+        default=["%a %d %B, %Y"],
+        help='RSS feed date format. Examples: "%%Y-%%m-%%d", "%%a %%d %%B, %%Y", "%%x"',
+    )
+    parser.add_argument(
+        "--feed-language",
+        default=DEFAULT_RSS_CHANNEL_LANGUAGE,
+        help='RSS feed language. Default: "' + DEFAULT_RSS_CHANNEL_LANGUAGE + '"',
+    )
+    parser.add_argument(
+        "--feed-time-format",
+        "-t",
+        nargs=1,
+        default=["%H:%M"],
+        help='RSS feed time format. Examples: "%%H:%%M", "%%I:%%M %%p", "%%X"',
+    )
+    parser.add_argument(
+        "--feed-title", default=DEFAULT_RSS_CHANNEL_TITLE, help="RSS feed title"
+    )
+    parser.add_argument(
+        "--feed-url",
+        default=DEFAULT_RSS_CHANNEL_LINK,
+        # help='RSS feed link. Default: "' + DEFAULT_RSS_CHANNEL_LINK + '"')
+        help="RSS feed link",
+    )
+    # parser.add_argument(
+    #    "--indent",
+    #    action="store_const",
+    #    const=True,
+    #    default=2,
+    #    help="Output XML indentation",
+    # )
+    parser.add_argument(
+        "--xmltv-datetime-format",
+        nargs=1,
+        default=DEFAULT_XMLTV_DATETIME_FORMAT,
+        help='XMLTV date and time format. Default: "'
+        + DEFAULT_XMLTV_DATETIME_FORMAT.replace("%", "%%")
+        + '". Default fallback: "'
+        + DEFAULT_XMLTV_DATETIME_FORMAT_UTC.replace("%", "%%")
+        + '"',
+    )
+    parser.add_argument(
+        "input_filename",
+        metavar="<file>",
+        nargs="?",
+        default=sys.stdin,
+        help="XMLTV input filename. Default: read from standard input",
+    )
+    parser.set_defaults(feed_description=DEFAULT_RSS_CHANNEL_DESCRIPTION)
+
+    args = parser.parse_args()
+    return args
+
+
 def run(args):
     # try:
 
     # from xml.etree.ElementTree import ElementTree
-    # xmltv_feed = ElementTree()
-    # xmltv_feed.parse(args.input_filename)
-    xmltv_feed = ElementTree.parse(args.input_filename)
+    # xmltv_listing = ElementTree()
+    # xmltv_listing.parse(args.input_filename)
+    xmltv_listing = ElementTree.parse(args.input_filename)
 
     # except xml.etree.ElementTree.ParseError as exc:
     #    ...
@@ -44,15 +109,17 @@ def run(args):
     else:
         pub_date = utils.formatdate(localtime=True)
 
-    rss_feed = convert_feed(args, created_on, pub_date, xmltv_feed)
+    rss_feed = convert_listing(args, created_on, pub_date, xmltv_listing)
 
     rss_feed.write(sys.stdout, encoding="unicode")
 
+    # indent = args.indent
+    #
     # rss_tree_str = xml.etree.ElementTree.tostring(rss_feed.getroot(), encoding='unicode')
     # print(parseString(rss_tree_str).toprettyxml(indent='  ', newl='\n'))
 
 
-def convert_feed(args, created_on, pub_date, xmltv_feed):
+def convert_listing(args, created_on, pub_date, xmltv_listing):
     RSS_CHANNEL_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0">
   <channel>
@@ -65,19 +132,6 @@ def convert_feed(args, created_on, pub_date, xmltv_feed):
   </channel>
 </rss>
 """
-
-    #    RSS_CHANNEL_TEMPLATE = \
-    #        '<?xml version="1.0" encoding="UTF-8" ?>' + \
-    #        '<rss version="2.0">' + \
-    #          '<channel>' + \
-    #            '<title>%(title)s</title>' + \
-    #            '<link>%(link)s</link>' + \
-    #            '<description>%(description)s</description>' + \
-    #            '<lastBuildDate>%(created_on)s</lastBuildDate>' + \
-    #            '<pubDate>%(pub_date)s</pubDate>' + \
-    #            '<language>%(language)s</language>' + \
-    #          '</channel>' + \
-    #        '</rss>'
 
     # For pretty output
     RSS_ITEM_HEAD_TEMPLATE = """
@@ -103,35 +157,39 @@ def convert_feed(args, created_on, pub_date, xmltv_feed):
     rss_feed.parse(io.StringIO(rss_channel_str))
 
     rss_channel = rss_feed.find("channel")
-    if rss_channel is not None:
+    if rss_channel is None:
+        return rss_feed
+
+    # For pretty output
+    #
+    # TODO: Return the last child, not the first child
+    # last_child = channel.find('*[last()]')
+    #
+    # last_child = channel.find('language')
+    children = rss_channel.findall("*")
+    last_child = children[len(children) - 1]
+    last_child.tail = RSS_ITEM_HEAD_TEMPLATE
+
+    # xmltv_programmes = iterfind('programme')
+    xmltv_programmes = xmltv_listing.findall("programme")
+    if xmltv_programmes is None:
+        return rss_feed
+
+    for i, xmltv_programme in enumerate(xmltv_programmes):
+        rss_item = convert_programme(args, xmltv_listing, xmltv_programme)
+
         # For pretty output
-        #
-        # TODO: Return the last child, not the first child
-        # last_child = channel.find('*[last()]')
-        #
-        # last_child = channel.find('language')
-        children = rss_channel.findall("*")
-        last_child = children[len(children) - 1]
-        last_child.tail = RSS_ITEM_HEAD_TEMPLATE
+        if i < len(xmltv_programmes) - 1:
+            rss_item.tail = RSS_ITEM_HEAD_TEMPLATE
+        else:
+            rss_item.tail = RSS_ITEM_TAIL_TEMPLATE
 
-        # xmltv_programmes = iterfind('programme')
-        xmltv_programmes = xmltv_feed.findall("programme")
-        if xmltv_programmes is not None:
-            for i, xmltv_programme in enumerate(xmltv_programmes):
-                rss_item = convert_programme(args, xmltv_feed, xmltv_programme)
-
-                # For pretty output
-                if i < len(xmltv_programmes) - 1:
-                    rss_item.tail = RSS_ITEM_HEAD_TEMPLATE
-                else:
-                    rss_item.tail = RSS_ITEM_TAIL_TEMPLATE
-
-                rss_channel.append(rss_item)
+        rss_channel.append(rss_item)
 
     return rss_feed
 
 
-def convert_programme(args, xmltv_feed, xmltv_programme):
+def convert_programme(args, xmltv_listing, xmltv_programme):
     RSS_ITEM_TEMPLATE = """
     <item>
       <title><![CDATA[%(title)s]]></title>
@@ -153,15 +211,6 @@ def convert_programme(args, xmltv_feed, xmltv_programme):
          </table>
       """
 
-    #    RSS_ITEM_TEMPLATE = \
-    #        '<item>' + \
-    #          '<title><![CDATA[%(title)s]]></title>' + \
-    #          '<link></link>' + \
-    #          '<description><![CDATA[%(description)s]]></description>' + \
-    #          '<guid>%(guid)s</guid>' + \
-    #          '<pubDate>%(pub_date)s</pubDate>' + \
-    #        '</item>'
-
     channel_id = xmltv_programme.get("channel", default="")
     title = xmltv_programme.findtext("title", default="")
     desc = xmltv_programme.findtext("desc", default="")
@@ -170,7 +219,7 @@ def convert_programme(args, xmltv_feed, xmltv_programme):
     starttime = xmltv_programme.get("start", default="")
     stoptime = xmltv_programme.get("stop", default=starttime)
 
-    channel_callsign = xmltv_feed.findtext(
+    channel_callsign = xmltv_listing.findtext(
         "./channel[@id='" + channel_id + "']/display-name"
     )
     channel = "{}-{}".format(channel_id, channel_callsign)
@@ -244,71 +293,11 @@ def convert_programme(args, xmltv_feed, xmltv_programme):
     rss_item_str = RSS_ITEM_TEMPLATE % rss_item_dict
 
     rss_item = ElementTree.fromstring(rss_item_str)
-
     return rss_item
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate an RSS feed from an XMLTV (tvguide) listing. Print the result to standard output.",
-        epilog='For information about date and time format strings ("%Y", "%H", etc.), search for "datetime" on https://docs.python.org.',
-    )
-    parser.add_argument(
-        "--feed-date-format",
-        "-d",
-        nargs=1,
-        default=["%a %d %B, %Y"],
-        help='RSS feed date format. Examples: "%%Y-%%m-%%d", "%%a %%d %%B, %%Y", "%%x"',
-    )
-    parser.add_argument(
-        "--feed-language",
-        default=DEFAULT_RSS_CHANNEL_LANGUAGE,
-        help='RSS feed language. Default: "' + DEFAULT_RSS_CHANNEL_LANGUAGE + '"',
-    )
-    parser.add_argument(
-        "--feed-time-format",
-        "-t",
-        nargs=1,
-        default=["%H:%M"],
-        help='RSS feed time format. Examples: "%%H:%%M", "%%I:%%M %%p", "%%X"',
-    )
-    parser.add_argument(
-        "--feed-title", default=DEFAULT_RSS_CHANNEL_TITLE, help="RSS feed title"
-    )
-    parser.add_argument(
-        "--feed-url",
-        default=DEFAULT_RSS_CHANNEL_LINK,
-        # help='RSS feed link. Default: "' + DEFAULT_RSS_CHANNEL_LINK + '"')
-        help="RSS feed link",
-    )
-    # parser.add_argument(
-    #    "--indent",
-    #    action="store_const",
-    #    const=True,
-    #    default=2,
-    #    help="Output XML indentation",
-    # )
-    parser.add_argument(
-        "--xmltv-datetime-format",
-        nargs=1,
-        default=DEFAULT_XMLTV_DATETIME_FORMAT,
-        help='XMLTV date and time format. Default: "'
-        + DEFAULT_XMLTV_DATETIME_FORMAT.replace("%", "%%")
-        + '". Default fallback: "'
-        + DEFAULT_XMLTV_DATETIME_FORMAT_UTC.replace("%", "%%")
-        + '"',
-    )
-    parser.add_argument(
-        "input_filename",
-        metavar="<file>",
-        nargs="?",
-        default=sys.stdin,
-        help="XMLTV input filename. Default: read from standard input",
-    )
-    parser.set_defaults(feed_description=DEFAULT_RSS_CHANNEL_DESCRIPTION)
-    args = parser.parse_args()
-    # indent = args.indent
-
+    args = parse_args()
     run(args)
 
 
