@@ -145,7 +145,7 @@ def convert_listing(args, created_on, pub_date, xmltv_listing):
 
     rss_channel_dict = dict(
         title=args.feed_title,
-        link=args.feed_url,
+        link=args.feed_url if args.feed_url else "",
         description=args.feed_description,
         pub_date=pub_date,
         created_on=created_on,
@@ -199,6 +199,7 @@ def convert_programme(args, xmltv_listing, xmltv_programme):
       <pubDate>%(pub_date)s</pubDate>
     </item>
 """
+
     RSS_ITEM_DESCRIPTION_TEMPLATE = """
          <table>
             <tr><td align="right" valign="top">Title:</td><td>%(title)s</td></tr>
@@ -222,7 +223,10 @@ def convert_programme(args, xmltv_listing, xmltv_programme):
     channel_callsign = xmltv_listing.findtext(
         "./channel[@id='" + channel_id + "']/display-name"
     )
-    channel = "{}-{}".format(channel_id, channel_callsign)
+    if channel_callsign:
+        channel = "{}-{}".format(channel_id, channel_callsign)
+    else:
+        channel = "{}".format(channel_id)
 
     # starttime/stoptime are of format "YYYYMMDDHHMMSS ±HHMM" or just "YYYYMMDDHHMMSS" (UTC assumed),
     # so we retry if parsing with timezone fails
@@ -265,7 +269,7 @@ def convert_programme(args, xmltv_listing, xmltv_programme):
         + ":00"
     )
 
-    # EPG <desc> allows newlines. Make them <br/> for pretty print output
+    # EPG <desc/> allows newlines. Make them <br/> for pretty print output
     desc = "<br/>".join(desc.splitlines())
 
     guid = channel_id + "-" + starttime_dt.strftime("%Y%m%d%H%M%S")
