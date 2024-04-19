@@ -272,7 +272,8 @@ def convert_programme(args, xmltv_listing, xmltv_programme):
     )
 
     # EPG <desc/> allows newlines. Make them <br/> for pretty print output
-    desc = "<br/>".join(desc.splitlines())
+    desc = desc.strip()
+    desc = "<br/>".join(line.strip() for line in desc.splitlines())
 
     guid = channel_id + "-" + starttime_dt.strftime("%Y%m%d%H%M%S")
     pub_date = utils.formatdate(starttime_dt.timestamp(), localtime=True)
