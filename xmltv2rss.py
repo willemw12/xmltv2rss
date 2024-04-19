@@ -18,7 +18,7 @@ from email import utils
 # from xml.dom.minidom import parseString
 # from xml.etree.ElementTree import ElementTree
 
-DEFAULT_XMLTV_DATETIME_FORMAT = "%Y%m%d%H%M%S %z"  # RFC-2822 formatted datetime
+DEFAULT_XMLTV_DATETIME_FORMAT = "%Y%m%d%H%M%S %z"
 DEFAULT_XMLTV_DATETIME_FORMAT_UTC = "%Y%m%d%H%M%S"
 DEFAULT_XMLTV_DATE_FORMAT = "%a %d %B, %Y"
 DEFAULT_XMLTV_TIME_FORMAT = "%H:%M"
@@ -103,7 +103,7 @@ def run(args):
     # except xml.etree.ElementTree.ParseError as exc:
     #    ...
 
-    created_on = utils.formatdate(localtime=True)
+    created_on = utils.format_datetime(datetime.now())
     if isinstance(args.input_filename, str):
         # Get modification time from the input file
         timestamp = os.path.getmtime(args.input_filename)
@@ -275,7 +275,8 @@ def convert_programme(args, xmltv_listing, xmltv_programme):
     desc = desc.strip()
     desc = "<br/>".join(line.strip() for line in desc.splitlines())
 
-    guid = channel_id + "-" + starttime_dt.strftime("%Y%m%d%H%M%S")
+    GUID_DATETIME_FORMAT = "%Y%m%d%H%M%S"
+    guid = channel_id + "-" + starttime_dt.strftime(GUID_DATETIME_FORMAT)
     pub_date = utils.formatdate(starttime_dt.timestamp(), localtime=True)
 
     description_dict = dict(
