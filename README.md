@@ -1,6 +1,6 @@
 # xmltv2rss
 
-Generate an RSS feed from an XMLTV (tvguide) listing.
+Generate an RSS feed from an XMLTV TV listing.
 
 
 ## Dependency
