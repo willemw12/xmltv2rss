@@ -47,6 +47,11 @@ def parse_args():
         help='RSS feed date format. Examples: "%%Y-%%m-%%d", "%%a %%d %%B, %%Y", "%%x"',
     )
     parser.add_argument(
+        "--feed-description",
+        default=DEFAULT_FEED_DESCRIPTION,
+        help="RSS feed description",
+    )
+    parser.add_argument(
         "--feed-language",
         default=DEFAULT_FEED_LANGUAGE,
         help='RSS feed language. Default: "' + DEFAULT_FEED_LANGUAGE + '"',
@@ -90,7 +95,6 @@ def parse_args():
         default=sys.stdin,
         help="XMLTV input filename. Default: read from standard input",
     )
-    parser.set_defaults(feed_description=DEFAULT_FEED_DESCRIPTION)
 
     args = parser.parse_args()
     return args
